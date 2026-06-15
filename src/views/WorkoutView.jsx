@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { WORKOUTS, WORKOUT_ROTATION } from '../data/program'
 import { getNextWorkoutIndex, getLastSets, saveSession, getRepRangeOverrides } from '../data/storage'
-import MuscleGroupSection from '../components/MuscleGroupSection'
+import ExerciseCard from '../components/ExerciseCard'
 
 // Merge rep range overrides into a copy of the exercises array
 function resolveExercises(exercises, overrides) {
@@ -63,19 +63,6 @@ function computeGoals(exercises) {
     }
   }
   return goals
-}
-
-function groupByMuscle(exercises) {
-  const groups = []
-  const seen = {}
-  for (const ex of exercises) {
-    if (!seen[ex.muscleGroup]) {
-      seen[ex.muscleGroup] = []
-      groups.push({ muscleGroup: ex.muscleGroup, exercises: seen[ex.muscleGroup] })
-    }
-    seen[ex.muscleGroup].push(ex)
-  }
-  return groups
 }
 
 function buildExercises(workoutIndex) {
@@ -151,8 +138,6 @@ export default function WorkoutView() {
     )
   }
 
-  const groups = groupByMuscle(exercises)
-
   return (
     <div className="workout-view">
       <header className="workout-header">
@@ -174,14 +159,15 @@ export default function WorkoutView() {
       </header>
 
       <div className="exercise-list">
-        {groups.map(group => (
-          <MuscleGroupSection
-            key={group.muscleGroup}
-            muscleGroup={group.muscleGroup}
-            exercises={group.exercises}
-            sets={sets}
-            goals={goals}
-            onUpdateSet={updateSet}
+        {exercises.map(ex => (
+          <ExerciseCard
+            key={ex.id}
+            exercise={ex}
+            sets={sets[ex.id]}
+            goals={goals[ex.id]}
+            onUpdateSet={(side, setIndex, field, value) =>
+              updateSet(ex.id, side, setIndex, field, value)
+            }
           />
         ))}
       </div>

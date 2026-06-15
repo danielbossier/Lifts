@@ -23,7 +23,10 @@ export default function ExerciseCard({ exercise, sets, goals, onUpdateSet }) {
   return (
     <div className="exercise-card">
       <div className="exercise-header">
-        <span className="exercise-name">{exercise.name}</span>
+        <div className="exercise-name-wrap">
+          <span className="exercise-name">{exercise.name}</span>
+          <span className="exercise-muscle-tag">{exercise.muscleGroup}</span>
+        </div>
         <span className="exercise-meta">{repRangeLabel(exercise)}</span>
       </div>
 

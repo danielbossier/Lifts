@@ -139,53 +139,57 @@ body {
   justify-content: space-between;
 }
 
-/* ── Exercise List ───────────────────────────────── */
+/* ── Exercise Card ───────────────────────────────── */
 
 .exercise-list {
-  padding: 0 12px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
-
-/* ── Muscle Group Section ────────────────────────── */
-
-.muscle-section {
-  margin-top: 20px;
-}
-
-.muscle-label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  color: var(--text-secondary);
-  padding: 0 4px 6px;
-}
-
-/* ── Exercise Card ───────────────────────────────── */
 
 .exercise-card {
   background: var(--surface);
   border-radius: var(--radius);
-  margin-bottom: 10px;
   overflow: hidden;
 }
 
 .exercise-header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  padding: 12px 14px 8px;
+  padding: 10px 14px 8px;
   border-bottom: 1px solid var(--border);
+  gap: 8px;
+}
+
+.exercise-name-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .exercise-name {
   font-size: 15px;
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.exercise-muscle-tag {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
 }
 
 .exercise-meta {
   font-size: 12px;
   color: var(--text-secondary);
   white-space: nowrap;
-  margin-left: 8px;
+  flex-shrink: 0;
 }
 
 /* ── Set Table ───────────────────────────────────── */
@@ -345,6 +349,148 @@ body {
 .complete-message p {
   font-size: 15px;
   color: var(--text-secondary);
+}
+
+/* ── History View ────────────────────────────────── */
+
+.history-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.history-header {
+  padding: 20px 16px 12px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 10;
+}
+
+.history-header h1 {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.history-empty {
+  padding: 48px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  text-align: center;
+}
+
+.history-empty p {
+  font-size: 15px;
+  color: var(--text-secondary);
+}
+
+.session-list {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.session-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.session-header {
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px;
+  cursor: pointer;
+  text-align: left;
+  gap: 12px;
+}
+
+.session-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.session-workout-label {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.session-date {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.session-chevron {
+  font-size: 18px;
+  color: var(--text-secondary);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.session-chevron.open {
+  transform: rotate(90deg);
+}
+
+.session-detail {
+  border-top: 1px solid var(--border);
+  padding: 10px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.session-empty {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.history-exercise {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.history-exercise-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.history-sets {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.history-set-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.history-side {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  width: 12px;
+  flex-shrink: 0;
+}
+
+.history-entries {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Settings View ───────────────────────────────── */

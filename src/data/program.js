@@ -6,7 +6,7 @@ export const WORKOUTS = [
     exercises: [
       {
         id: 'pull-up',
-        name: 'Overhand Pull Up',
+        name: 'Weighted Pull Up',
         muscleGroup: 'Back',
         sets: 3,
         repRange: [5, 7],
@@ -22,7 +22,7 @@ export const WORKOUTS = [
       },
       {
         id: 'incline-db-row',
-        name: 'Incline Bench Dumbbell Row',
+        name: 'Incline Dumbbell Row',
         muscleGroup: 'Back',
         sets: 3,
         repRange: [8, 10],
@@ -116,7 +116,7 @@ export const WORKOUTS = [
       },
       {
         id: 'calf-raise-lp',
-        name: 'Leg Press Calf Raise',
+        name: 'Calf Raise',
         muscleGroup: 'Calves',
         sets: 3,
         repRange: [8, 10],
@@ -170,7 +170,7 @@ export const WORKOUTS = [
       },
       {
         id: 'vbar-pulldown',
-        name: 'V-Bar Pulldown',
+        name: 'Cable Pulldown',
         muscleGroup: 'Back',
         sets: 3,
         repRange: [8, 10],
@@ -186,11 +186,11 @@ export const WORKOUTS = [
       },
       {
         id: 'supinating-curl',
-        name: 'Supinating Dumbbell Curl',
+        name: 'EZ Bar Curl',
         muscleGroup: 'Biceps',
         sets: 3,
         repRange: [5, 7],
-        tracking: 'perArm',
+        tracking: 'normal',
       },
       {
         id: 'rope-pushdown',
@@ -240,7 +240,7 @@ export const WORKOUTS = [
       },
       {
         id: 'calf-raise-lp',
-        name: 'Leg Press Calf Raise',
+        name: 'Calf Raise',
         muscleGroup: 'Calves',
         sets: 3,
         repRange: [8, 10],

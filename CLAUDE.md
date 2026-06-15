@@ -99,9 +99,11 @@ Lists all unique exercises once (deduplicated by `exercise.id`, grouped under th
 
 Single CSS file at `src/index.css`. Dark theme via CSS custom properties on `:root`. Mobile-first, max-width 480px centered. Tab bar is fixed-height at bottom (`--tab-height: 56px`). Set table column grids are defined using CSS `:has()` selectors that target the column class names present in each row.
 
-### What is not yet implemented
+### History view (`src/views/HistoryView.jsx`)
 
-- **History view**: list past sessions by date with exercise details
+Lists sessions newest-first via `getAllSessions()`. Each session is a collapsible card showing the workout label and date. Expanding a card iterates `workout.exercises` in order and renders any logged sets.
+
+Set data is formatted by `summariseSets(exSets, tracking)` which returns `[{ label, entries }]` — `label` is `''` for non-sided exercises or `'L'`/`'R'` for bilateral, and `entries` is an array of strings like `'50×7'` (reps) or `'45s'` (time). Exercises with no logged sets (all-null values) are skipped. The `·`-separated entries are rendered in a monospaced numeric font for easy scanning.
 
 ## Deployment
 
