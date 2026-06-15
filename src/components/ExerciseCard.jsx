@@ -3,6 +3,19 @@ import PerSideSetRow from './sets/PerSideSetRow'
 import TimeSetRow from './sets/TimeSetRow'
 import TimePerSideSetRow from './sets/TimePerSideSetRow'
 
+// An exercise is complete when every set has reps (or seconds) filled in.
+// Weight is not required — bodyweight movements have no weight to log.
+function checkComplete(sets, tracking) {
+  const isBilateral = tracking === 'perArm' || tracking === 'perLeg' || tracking === 'timePerSide'
+  const isTime = tracking === 'time' || tracking === 'timePerSide'
+  const field = isTime ? 'seconds' : 'reps'
+  const sides = isBilateral ? ['left', 'right'] : ['main']
+  return sides.every(side =>
+    (sets[side] ?? []).length > 0 &&
+    (sets[side] ?? []).every(s => s[field] !== '' && s[field] != null)
+  )
+}
+
 function repRangeLabel(exercise) {
   const [lo, hi] = exercise.repRange
   const isTime = exercise.tracking === 'time' || exercise.tracking === 'timePerSide'
@@ -19,9 +32,10 @@ export default function ExerciseCard({ exercise, sets, goals, onUpdateSet }) {
   const isPerSide = tracking === 'perArm' || tracking === 'perLeg'
   const isTime = tracking === 'time'
   const isTimePerSide = tracking === 'timePerSide'
+  const complete = checkComplete(sets, tracking)
 
   return (
-    <div className="exercise-card">
+    <div className={`exercise-card ${complete ? 'is-complete' : ''}`}>
       <div className="exercise-header">
         <div className="exercise-name-wrap">
           <span className="exercise-name">{exercise.name}</span>

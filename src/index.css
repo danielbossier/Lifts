@@ -152,6 +152,16 @@ body {
   background: var(--surface);
   border-radius: var(--radius);
   overflow: hidden;
+  border-left: 3px solid transparent;
+  transition: border-color 0.2s;
+}
+
+.exercise-card.is-complete {
+  border-left-color: var(--goal);
+}
+
+.exercise-card.is-complete .exercise-muscle-tag {
+  color: var(--goal);
 }
 
 .exercise-header {
