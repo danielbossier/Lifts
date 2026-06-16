@@ -1,9 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { WORKOUTS, WORKOUT_ROTATION } from '../data/program'
-import { getNextWorkoutIndex, getLastSets, saveSession, getRepRangeOverrides } from '../data/storage'
+import { getNextWorkoutIndex, getLastSets, saveSession, getRepRangeOverrides, saveDraft, loadDraft, clearDraft } from '../data/storage'
 import ExerciseCard from '../components/ExerciseCard'
 
-// Merge rep range overrides into a copy of the exercises array
 function resolveExercises(exercises, overrides) {
   return exercises.map(ex =>
     overrides[ex.id] ? { ...ex, repRange: overrides[ex.id] } : ex
@@ -69,15 +68,47 @@ function buildExercises(workoutIndex) {
   return resolveExercises(WORKOUTS[workoutIndex].exercises, getRepRangeOverrides())
 }
 
+function formatElapsed(secs) {
+  const m = Math.floor(secs / 60)
+  const s = secs % 60
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
 export default function WorkoutView() {
   const nextIndex = getNextWorkoutIndex()
-  const [workoutIndex, setWorkoutIndex] = useState(() => getNextWorkoutIndex())
+  const [workoutIndex, setWorkoutIndex] = useState(() => {
+    const draft = loadDraft()
+    return draft?.workoutIndex ?? getNextWorkoutIndex()
+  })
   const [completed, setCompleted] = useState(false)
   const workout = WORKOUTS[workoutIndex]
 
   const exercises = buildExercises(workoutIndex)
-  const [sets, setSets] = useState(() => buildInitialSets(exercises))
+  const [sets, setSets] = useState(() => {
+    const draft = loadDraft()
+    if (draft != null) return draft.sets
+    return buildInitialSets(exercises)
+  })
   const goals = computeGoals(exercises)
+
+  const [restStart, setRestStart] = useState(null)
+  const [restLabel, setRestLabel] = useState('')
+  const [elapsedSecs, setElapsedSecs] = useState(0)
+
+  // Auto-save in-progress sets so a page refresh doesn't lose data
+  useEffect(() => {
+    saveDraft(workoutIndex, sets)
+  }, [workoutIndex, sets])
+
+  // Rest timer counts up from the moment a set is logged
+  useEffect(() => {
+    if (!restStart) return
+    setElapsedSecs(0)
+    const interval = setInterval(() => {
+      setElapsedSecs(Math.floor((Date.now() - restStart) / 1000))
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [restStart])
 
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'short', month: 'short', day: 'numeric',
@@ -87,6 +118,7 @@ export default function WorkoutView() {
     if (index === workoutIndex) return
     setWorkoutIndex(index)
     setSets(buildInitialSets(buildExercises(index)))
+    setRestStart(null)
   }
 
   function updateSet(exerciseId, side, setIndex, field, value) {
@@ -97,6 +129,12 @@ export default function WorkoutView() {
       )
       return { ...prev, [exerciseId]: { ...prev[exerciseId], [key]: updated } }
     })
+
+    if ((field === 'reps' || field === 'seconds') && value !== '') {
+      const ex = exercises.find(e => e.id === exerciseId)
+      setRestLabel(`${ex.name} – Set ${setIndex + 1}`)
+      setRestStart(Date.now())
+    }
   }
 
   function handleComplete() {
@@ -113,6 +151,7 @@ export default function WorkoutView() {
       }
     }
     saveSession(workout.id, normalized)
+    clearDraft()
     setCompleted(true)
   }
 
@@ -121,6 +160,7 @@ export default function WorkoutView() {
     setWorkoutIndex(next)
     setSets(buildInitialSets(buildExercises(next)))
     setCompleted(false)
+    setRestStart(null)
   }
 
   if (completed) {
@@ -156,6 +196,13 @@ export default function WorkoutView() {
           <h1 className="workout-title">{workout.label}</h1>
           <span className="workout-date">{today}</span>
         </div>
+        {restStart !== null && (
+          <div className="rest-timer">
+            <span className="rest-timer-label">Rest – {restLabel}</span>
+            <span className="rest-timer-time">{formatElapsed(elapsedSecs)}</span>
+            <button className="rest-timer-dismiss" onClick={() => setRestStart(null)}>×</button>
+          </div>
+        )}
       </header>
 
       <div className="exercise-list">

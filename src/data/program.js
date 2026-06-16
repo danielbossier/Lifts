@@ -22,7 +22,7 @@ export const WORKOUTS = [
       },
       {
         id: 'incline-db-row',
-        name: 'Incline Dumbbell Row',
+        name: 'Cable Row',
         muscleGroup: 'Back',
         sets: 3,
         repRange: [8, 10],
