@@ -21,17 +21,21 @@ function getSides(tracking) {
   return isBilateral(tracking) ? ['left', 'right'] : ['main']
 }
 
-// Pre-fill weight from last session; reps/seconds always start blank
+// Pre-fill weight from last session; increment by 5 if last reps hit the top of the range.
 function buildInitialSets(exercises) {
   const sets = {}
   for (const ex of exercises) {
     const timeBased = isTimeBased(ex.tracking)
+    const [, hi] = ex.repRange
     sets[ex.id] = {}
     for (const side of getSides(ex.tracking)) {
       const history = getLastSets(ex.id, side)
       sets[ex.id][side] = Array.from({ length: ex.sets }, (_, i) => {
         if (timeBased) return { seconds: '' }
-        return { weight: history?.[i]?.weight ?? '', reps: '' }
+        const lastWeight = history?.[i]?.weight ?? ''
+        const lastReps = Number(history?.[i]?.reps)
+        const weight = lastWeight !== '' && lastReps >= hi ? lastWeight + 5 : lastWeight
+        return { weight, reps: '' }
       })
     }
   }

@@ -5,7 +5,9 @@
       "Bash(npm install *)",
       "Bash(npm run *)",
       "Bash(gh auth *)",
-      "PowerShell(gh auth status 2>&1)"
+      "PowerShell(gh auth status 2>&1)",
+      "Skill(run)",
+      "Skill(run:*)"
     ]
   }
 }
