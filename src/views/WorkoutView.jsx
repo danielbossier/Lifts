@@ -44,7 +44,7 @@ function buildInitialSets(exercises) {
 
 // Per-set goal values derived from last session performance.
 // Time-based: add 5s to last hold, capped at range ceiling.
-// Rep-based: if last reps >= lo, push to hi; otherwise aim for lo.
+// Rep-based: hit top of range last time (weight bumps) → back to lo; hit range → push to hi; below range → lo.
 function computeGoals(exercises) {
   const goals = {}
   for (const ex of exercises) {
@@ -61,7 +61,7 @@ function computeGoals(exercises) {
           return secs > 0 ? Math.min(secs + 5, hi) : lo
         }
         const reps = Number(last.reps)
-        return reps >= lo ? hi : lo
+        return reps >= hi ? lo : reps >= lo ? hi : lo
       })
     }
   }

@@ -20,7 +20,7 @@ function save(state) {
 
 // Index into WORKOUT_ROTATION for the next workout to perform
 export function getNextWorkoutIndex() {
-  return load().nextWorkoutIndex
+  return load().nextWorkoutIndex % WORKOUT_ROTATION.length
 }
 
 // Most recent set entries for a given exercise + side ('main' | 'left' | 'right').
