@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import WorkoutView from './views/WorkoutView'
 import HistoryView from './views/HistoryView'
+import PRView from './views/PRView'
 import SettingsView from './views/SettingsView'
 
 const TABS = [
   { id: 'workout', label: 'Workout' },
   { id: 'history', label: 'History' },
+  { id: 'records', label: 'Records' },
   { id: 'settings', label: 'Settings' },
 ]
 
@@ -17,6 +19,7 @@ export default function App() {
       <main className="app-content">
         {activeTab === 'workout' && <WorkoutView />}
         {activeTab === 'history' && <HistoryView />}
+        {activeTab === 'records' && <PRView />}
         {activeTab === 'settings' && <SettingsView />}
       </main>
       <nav className="tab-bar">

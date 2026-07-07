@@ -135,8 +135,22 @@ body {
 
 .workout-header-bottom {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
+}
+
+.workout-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.workout-elapsed {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Exercise Card ───────────────────────────────── */
@@ -673,4 +687,83 @@ body {
 
 .rest-timer-dismiss:hover {
   color: var(--text);
+}
+
+/* ── Records (PR) View ───────────────────────────── */
+
+.pr-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.pr-header {
+  padding: 20px 16px 12px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 10;
+}
+
+.pr-header h1 {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.pr-content {
+  padding: 0 12px 20px;
+  overflow-y: auto;
+}
+
+.pr-section {
+  margin-top: 20px;
+}
+
+.pr-workout-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  padding: 0 4px 6px;
+  text-transform: uppercase;
+}
+
+.pr-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 6px;
+  gap: 12px;
+}
+
+.pr-exercise-name {
+  font-size: 14px;
+  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+}
+
+.pr-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--goal);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.pr-sided {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.pr-side-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
 }

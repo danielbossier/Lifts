@@ -73,8 +73,10 @@ function buildExercises(workoutIndex) {
 }
 
 function formatElapsed(secs) {
-  const m = Math.floor(secs / 60)
+  const h = Math.floor(secs / 3600)
+  const m = Math.floor((secs % 3600) / 60)
   const s = secs % 60
+  if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
@@ -90,7 +92,9 @@ export default function WorkoutView() {
   const exercises = buildExercises(workoutIndex)
   const [sets, setSets] = useState(() => {
     const draft = loadDraft()
-    if (draft != null) return draft.sets
+    if (draft != null && exercises.every(ex => draft.sets[ex.id] != null)) {
+      return draft.sets
+    }
     return buildInitialSets(exercises)
   })
   const goals = computeGoals(exercises)
@@ -98,11 +102,15 @@ export default function WorkoutView() {
   const [restStart, setRestStart] = useState(null)
   const [restLabel, setRestLabel] = useState('')
   const [elapsedSecs, setElapsedSecs] = useState(0)
+  const [workoutStart, setWorkoutStart] = useState(() => loadDraft()?.workoutStart ?? null)
+  const [workoutElapsed, setWorkoutElapsed] = useState(
+    () => workoutStart ? Math.floor((Date.now() - workoutStart) / 1000) : 0
+  )
 
   // Auto-save in-progress sets so a page refresh doesn't lose data
   useEffect(() => {
-    saveDraft(workoutIndex, sets)
-  }, [workoutIndex, sets])
+    saveDraft(workoutIndex, sets, workoutStart)
+  }, [workoutIndex, sets, workoutStart])
 
   // Rest timer counts up from the moment a set is logged
   useEffect(() => {
@@ -114,6 +122,15 @@ export default function WorkoutView() {
     return () => clearInterval(interval)
   }, [restStart])
 
+  // Workout duration timer — starts on first logged set
+  useEffect(() => {
+    if (!workoutStart) return
+    const interval = setInterval(() => {
+      setWorkoutElapsed(Math.floor((Date.now() - workoutStart) / 1000))
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [workoutStart])
+
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'short', month: 'short', day: 'numeric',
   })
@@ -123,6 +140,8 @@ export default function WorkoutView() {
     setWorkoutIndex(index)
     setSets(buildInitialSets(buildExercises(index)))
     setRestStart(null)
+    setWorkoutStart(null)
+    setWorkoutElapsed(0)
   }
 
   function updateSet(exerciseId, side, setIndex, field, value) {
@@ -137,7 +156,9 @@ export default function WorkoutView() {
     if ((field === 'reps' || field === 'seconds') && value !== '') {
       const ex = exercises.find(e => e.id === exerciseId)
       setRestLabel(`${ex.name} – Set ${setIndex + 1}`)
-      setRestStart(Date.now())
+      const now = Date.now()
+      setRestStart(now)
+      if (!workoutStart) setWorkoutStart(now)
     }
   }
 
@@ -165,6 +186,8 @@ export default function WorkoutView() {
     setSets(buildInitialSets(buildExercises(next)))
     setCompleted(false)
     setRestStart(null)
+    setWorkoutStart(null)
+    setWorkoutElapsed(0)
   }
 
   if (completed) {
@@ -198,7 +221,12 @@ export default function WorkoutView() {
         </div>
         <div className="workout-header-bottom">
           <h1 className="workout-title">{workout.label}</h1>
-          <span className="workout-date">{today}</span>
+          <div className="workout-meta">
+            <span className="workout-date">{today}</span>
+            {workoutStart !== null && (
+              <span className="workout-elapsed">{formatElapsed(workoutElapsed)}</span>
+            )}
+          </div>
         </div>
         {restStart !== null && (
           <div className="rest-timer">

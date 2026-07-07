@@ -66,6 +66,35 @@ export function saveRepRangeOverride(exerciseId, range) {
   save(state)
 }
 
+// Best set per exercise per side across all sessions.
+// Weight-based: highest weight (ties broken by reps). Time-based: longest hold.
+export function getPersonalRecords() {
+  const { sessions } = load()
+  const records = {}
+  for (const session of sessions) {
+    for (const [exId, sides] of Object.entries(session.sets)) {
+      if (!records[exId]) records[exId] = {}
+      for (const [side, sets] of Object.entries(sides)) {
+        for (const set of sets) {
+          if ('seconds' in set) {
+            if (set.seconds != null) {
+              const cur = records[exId][side]
+              if (!cur || set.seconds > cur.seconds) records[exId][side] = { seconds: set.seconds }
+            }
+          } else {
+            if (set.weight != null && set.reps != null) {
+              const cur = records[exId][side]
+              if (!cur || set.weight > cur.weight || (set.weight === cur.weight && set.reps > cur.reps))
+                records[exId][side] = { weight: set.weight, reps: set.reps }
+            }
+          }
+        }
+      }
+    }
+  }
+  return records
+}
+
 export function clearRepRangeOverride(exerciseId) {
   const state = load()
   if (state.repRangeOverrides) {
@@ -76,8 +105,8 @@ export function clearRepRangeOverride(exerciseId) {
 
 const DRAFT_KEY = 'wt-v1-draft'
 
-export function saveDraft(workoutIndex, sets) {
-  localStorage.setItem(DRAFT_KEY, JSON.stringify({ workoutIndex, sets }))
+export function saveDraft(workoutIndex, sets, workoutStart = null) {
+  localStorage.setItem(DRAFT_KEY, JSON.stringify({ workoutIndex, sets, workoutStart }))
 }
 
 export function loadDraft() {
