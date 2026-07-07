@@ -755,6 +755,20 @@ body {
   flex-shrink: 0;
 }
 
+.pr-entry {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.pr-1rm {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
 .pr-sided {
   display: flex;
   align-items: center;
