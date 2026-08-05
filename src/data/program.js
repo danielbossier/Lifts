@@ -46,19 +46,19 @@ export const WORKOUTS = [
       },
       {
         id: 'incline-db-curl',
-        name: 'Incline Dumbbell Curl',
+        name: 'Close Grip Pull-Down',
         muscleGroup: 'Biceps',
         sets: 3,
         repRange: [8, 10],
-        tracking: 'perArm',
+        tracking: 'normal',
       },
       {
         id: 'overhead-cable-ext',
-        name: 'One-Arm Overhead Cable Extension',
+        name: 'Skull Crushers',
         muscleGroup: 'Triceps',
         sets: 3,
         repRange: [8, 10],
-        tracking: 'perArm',
+        tracking: 'normal',
       },
       {
         id: 'face-pull',
@@ -108,11 +108,11 @@ export const WORKOUTS = [
       },
       {
         id: 'db-step-up',
-        name: 'Dumbbell Step-Up',
+        name: 'Leg Extension',
         muscleGroup: 'Quads',
         sets: 3,
         repRange: [8, 10],
-        tracking: 'perLeg',
+        tracking: 'normal',
       },
       {
         id: 'lying-db-curl',
