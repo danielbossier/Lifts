@@ -69,6 +69,10 @@ Key functions:
 - `getPersonalRecords()` — scans all sessions and returns the best set per exercise per side: highest weight (ties broken by reps) for weight-based, longest hold for time-based
 - `saveDraft(workoutIndex, sets, workoutStart, lastSetAt, capSets)` / `loadDraft()` / `clearDraft()` — persists in-progress workout state (workout timer start timestamp, per-exercise last-set timestamps, and the 2-set toggle) so a page refresh doesn't lose data
 
+### Utilities (`src/utils/time.js`)
+
+`formatElapsed(secs)` — formats a seconds count as `m:ss`, or `h:mm:ss` past an hour. Shared by the workout-duration display and the per-exercise rest badges (both in `WorkoutView`/`ExerciseCard`).
+
 ### WorkoutView (`src/views/WorkoutView.jsx`)
 
 Core logic lives here. On each render, exercises are resolved by merging rep range overrides into the hardcoded data and applying the 2-set cap (`buildExercises` = `resolveExercises` + `applySetCap`), then:
