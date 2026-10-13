@@ -73,7 +73,7 @@ Key functions:
 
 Core logic lives here. On each render, exercises are resolved by merging rep range overrides into the hardcoded data and applying the 2-set cap (`buildExercises` = `resolveExercises` + `applySetCap`), then:
 
-- `buildInitialSets(exercises)` — constructs blank set state, pre-filling weight from the most recent session for that exercise+side; auto-increments weight by 5 if last reps hit the top of the range
+- `buildInitialSets(exercises)` — constructs blank set state, pre-filling weight from the most recent session for that exercise+side; auto-increments weight by 5 only if *every* set in that last session hit the top of the rep range (one missed set withholds the bump for all sets)
 - `computeGoals(exercises)` — per-set goal values derived from last session:
   - Rep-based: last reps ≥ hi (weight just bumped) → goal = lo; last reps ≥ lo → goal = hi; otherwise → lo; no history → lo
   - Time-based: last seconds + 5, capped at hi; no history → lo

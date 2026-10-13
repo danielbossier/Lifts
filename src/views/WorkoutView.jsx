@@ -28,7 +28,7 @@ function getSides(tracking) {
   return isBilateral(tracking) ? ['left', 'right'] : ['main']
 }
 
-// Pre-fill weight from last session; increment by 5 if last reps hit the top of the range.
+// Pre-fill weight from last session; increment by 5 only if every set last time hit the top of the range.
 function buildInitialSets(exercises) {
   const sets = {}
   for (const ex of exercises) {
@@ -37,11 +37,11 @@ function buildInitialSets(exercises) {
     sets[ex.id] = {}
     for (const side of getSides(ex.tracking)) {
       const history = getLastSets(ex.id, side)
+      const allHitTop = !timeBased && history?.length > 0 && history.every(s => Number(s.reps) >= hi)
       sets[ex.id][side] = Array.from({ length: ex.sets }, (_, i) => {
         if (timeBased) return { seconds: '' }
         const lastWeight = history?.[i]?.weight ?? ''
-        const lastReps = Number(history?.[i]?.reps)
-        const weight = lastWeight !== '' && lastReps >= hi ? lastWeight + 5 : lastWeight
+        const weight = lastWeight !== '' && allHitTop ? lastWeight + 5 : lastWeight
         return { weight, reps: '' }
       })
     }
