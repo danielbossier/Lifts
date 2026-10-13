@@ -2,6 +2,7 @@ import NormalSetRow from './sets/NormalSetRow'
 import PerSideSetRow from './sets/PerSideSetRow'
 import TimeSetRow from './sets/TimeSetRow'
 import TimePerSideSetRow from './sets/TimePerSideSetRow'
+import { formatElapsed } from '../utils/time'
 
 // An exercise is complete when every set has reps (or seconds) filled in.
 // Weight is not required — bodyweight movements have no weight to log.
@@ -27,7 +28,7 @@ function repRangeLabel(exercise) {
   return `${lo}–${hi} ${unit}${perNote}`
 }
 
-export default function ExerciseCard({ exercise, sets, goals, onUpdateSet }) {
+export default function ExerciseCard({ exercise, sets, goals, restSeconds, onUpdateSet }) {
   const { tracking } = exercise
   const isPerSide = tracking === 'perArm' || tracking === 'perLeg'
   const isTime = tracking === 'time'
@@ -41,7 +42,12 @@ export default function ExerciseCard({ exercise, sets, goals, onUpdateSet }) {
           <span className="exercise-name">{exercise.name}</span>
           <span className="exercise-muscle-tag">{exercise.muscleGroup}</span>
         </div>
-        <span className="exercise-meta">{repRangeLabel(exercise)}</span>
+        <div className="exercise-header-meta">
+          <span className="exercise-meta">{repRangeLabel(exercise)}</span>
+          {!complete && restSeconds != null && (
+            <span className="exercise-rest">Rest {formatElapsed(restSeconds)}</span>
+          )}
+        </div>
       </div>
 
       {isPerSide && (

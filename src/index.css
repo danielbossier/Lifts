@@ -209,11 +209,26 @@ body {
   letter-spacing: 0.02em;
 }
 
+.exercise-header-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
 .exercise-meta {
   font-size: 12px;
   color: var(--text-secondary);
   white-space: nowrap;
-  flex-shrink: 0;
+}
+
+.exercise-rest {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Set Table ───────────────────────────────────── */
@@ -647,46 +662,35 @@ body {
   color: var(--text);
 }
 
-/* ── Rest Timer ──────────────────────────────────── */
+/* ── 2-Set Day Toggle ────────────────────────────── */
 
-.rest-timer {
+.workout-title-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 0 2px;
-  border-top: 1px solid var(--border);
-  margin-top: 8px;
+  gap: 10px;
 }
 
-.rest-timer-label {
+.cap-sets-toggle {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text-secondary);
   font-size: 12px;
-  color: var(--text-secondary);
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.rest-timer-time {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--accent);
-  font-variant-numeric: tabular-nums;
-}
-
-.rest-timer-dismiss {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 18px;
+  font-weight: 600;
+  padding: 4px 10px;
   cursor: pointer;
-  padding: 0 2px;
-  line-height: 1;
-  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
 }
 
-.rest-timer-dismiss:hover {
-  color: var(--text);
+.cap-sets-toggle.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.cap-sets-toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* ── Records (PR) View ───────────────────────────── */

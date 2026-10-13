@@ -1,12 +1,19 @@
 import { useState, useEffect } from 'react'
 import { WORKOUTS, WORKOUT_ROTATION } from '../data/program'
 import { getNextWorkoutIndex, getLastSets, saveSession, getRepRangeOverrides, saveDraft, loadDraft, clearDraft } from '../data/storage'
+import { formatElapsed } from '../utils/time'
 import ExerciseCard from '../components/ExerciseCard'
 
 function resolveExercises(exercises, overrides) {
   return exercises.map(ex =>
     overrides[ex.id] ? { ...ex, repRange: overrides[ex.id] } : ex
   )
+}
+
+// Cap every exercise at 2 sets for an intensity-focused session; leaves 1- and 2-set exercises untouched.
+function applySetCap(exercises, capSets) {
+  if (!capSets) return exercises
+  return exercises.map(ex => ({ ...ex, sets: Math.min(ex.sets, 2) }))
 }
 
 function isBilateral(tracking) {
@@ -68,16 +75,9 @@ function computeGoals(exercises) {
   return goals
 }
 
-function buildExercises(workoutIndex) {
-  return resolveExercises(WORKOUTS[workoutIndex].exercises, getRepRangeOverrides())
-}
-
-function formatElapsed(secs) {
-  const h = Math.floor(secs / 3600)
-  const m = Math.floor((secs % 3600) / 60)
-  const s = secs % 60
-  if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
-  return `${m}:${s.toString().padStart(2, '0')}`
+function buildExercises(workoutIndex, capSets) {
+  const resolved = resolveExercises(WORKOUTS[workoutIndex].exercises, getRepRangeOverrides())
+  return applySetCap(resolved, capSets)
 }
 
 export default function WorkoutView() {
@@ -89,7 +89,8 @@ export default function WorkoutView() {
   const [completed, setCompleted] = useState(false)
   const workout = WORKOUTS[workoutIndex]
 
-  const exercises = buildExercises(workoutIndex)
+  const [capSets, setCapSets] = useState(() => loadDraft()?.capSets ?? false)
+  const exercises = buildExercises(workoutIndex, capSets)
   const [sets, setSets] = useState(() => {
     const draft = loadDraft()
     if (draft != null && exercises.every(ex => draft.sets[ex.id] != null)) {
@@ -99,9 +100,9 @@ export default function WorkoutView() {
   })
   const goals = computeGoals(exercises)
 
-  const [restStart, setRestStart] = useState(null)
-  const [restLabel, setRestLabel] = useState('')
-  const [elapsedSecs, setElapsedSecs] = useState(0)
+  // Time since each exercise's last logged set, keyed by exercise id
+  const [lastSetAt, setLastSetAt] = useState(() => loadDraft()?.lastSetAt ?? {})
+  const [now, setNow] = useState(() => Date.now())
   const [workoutStart, setWorkoutStart] = useState(() => loadDraft()?.workoutStart ?? null)
   const [workoutElapsed, setWorkoutElapsed] = useState(
     () => workoutStart ? Math.floor((Date.now() - workoutStart) / 1000) : 0
@@ -109,24 +110,16 @@ export default function WorkoutView() {
 
   // Auto-save in-progress sets so a page refresh doesn't lose data
   useEffect(() => {
-    saveDraft(workoutIndex, sets, workoutStart)
-  }, [workoutIndex, sets, workoutStart])
+    saveDraft(workoutIndex, sets, workoutStart, lastSetAt, capSets)
+  }, [workoutIndex, sets, workoutStart, lastSetAt, capSets])
 
-  // Rest timer counts up from the moment a set is logged
-  useEffect(() => {
-    if (!restStart) return
-    setElapsedSecs(0)
-    const interval = setInterval(() => {
-      setElapsedSecs(Math.floor((Date.now() - restStart) / 1000))
-    }, 1000)
-    return () => clearInterval(interval)
-  }, [restStart])
-
-  // Workout duration timer — starts on first logged set
+  // Workout duration timer — starts on first logged set; also drives the per-exercise rest clocks
   useEffect(() => {
     if (!workoutStart) return
     const interval = setInterval(() => {
-      setWorkoutElapsed(Math.floor((Date.now() - workoutStart) / 1000))
+      const t = Date.now()
+      setWorkoutElapsed(Math.floor((t - workoutStart) / 1000))
+      setNow(t)
     }, 1000)
     return () => clearInterval(interval)
   }, [workoutStart])
@@ -138,10 +131,18 @@ export default function WorkoutView() {
   function selectWorkout(index) {
     if (index === workoutIndex) return
     setWorkoutIndex(index)
-    setSets(buildInitialSets(buildExercises(index)))
-    setRestStart(null)
+    setCapSets(false)
+    setSets(buildInitialSets(buildExercises(index, false)))
+    setLastSetAt({})
     setWorkoutStart(null)
     setWorkoutElapsed(0)
+  }
+
+  function toggleCapSets() {
+    if (workoutStart !== null) return
+    const next = !capSets
+    setCapSets(next)
+    setSets(buildInitialSets(buildExercises(workoutIndex, next)))
   }
 
   function updateSet(exerciseId, side, setIndex, field, value) {
@@ -154,11 +155,10 @@ export default function WorkoutView() {
     })
 
     if ((field === 'reps' || field === 'seconds') && value !== '') {
-      const ex = exercises.find(e => e.id === exerciseId)
-      setRestLabel(`${ex.name} – Set ${setIndex + 1}`)
-      const now = Date.now()
-      setRestStart(now)
-      if (!workoutStart) setWorkoutStart(now)
+      const t = Date.now()
+      setLastSetAt(prev => ({ ...prev, [exerciseId]: t }))
+      setNow(t)
+      if (!workoutStart) setWorkoutStart(t)
     }
   }
 
@@ -183,9 +183,10 @@ export default function WorkoutView() {
   function handleStartNext() {
     const next = getNextWorkoutIndex()
     setWorkoutIndex(next)
-    setSets(buildInitialSets(buildExercises(next)))
+    setCapSets(false)
+    setSets(buildInitialSets(buildExercises(next, false)))
     setCompleted(false)
-    setRestStart(null)
+    setLastSetAt({})
     setWorkoutStart(null)
     setWorkoutElapsed(0)
   }
@@ -220,7 +221,16 @@ export default function WorkoutView() {
           ))}
         </div>
         <div className="workout-header-bottom">
-          <h1 className="workout-title">{workout.label}</h1>
+          <div className="workout-title-row">
+            <h1 className="workout-title">{workout.label}</h1>
+            <button
+              className={`cap-sets-toggle ${capSets ? 'active' : ''}`}
+              disabled={workoutStart !== null}
+              onClick={toggleCapSets}
+            >
+              2-Set Day
+            </button>
+          </div>
           <div className="workout-meta">
             <span className="workout-date">{today}</span>
             {workoutStart !== null && (
@@ -228,13 +238,6 @@ export default function WorkoutView() {
             )}
           </div>
         </div>
-        {restStart !== null && (
-          <div className="rest-timer">
-            <span className="rest-timer-label">Rest – {restLabel}</span>
-            <span className="rest-timer-time">{formatElapsed(elapsedSecs)}</span>
-            <button className="rest-timer-dismiss" onClick={() => setRestStart(null)}>×</button>
-          </div>
-        )}
       </header>
 
       <div className="exercise-list">
@@ -244,6 +247,7 @@ export default function WorkoutView() {
             exercise={ex}
             sets={sets[ex.id]}
             goals={goals[ex.id]}
+            restSeconds={lastSetAt[ex.id] != null ? Math.floor((now - lastSetAt[ex.id]) / 1000) : null}
             onUpdateSet={(side, setIndex, field, value) =>
               updateSet(ex.id, side, setIndex, field, value)
             }

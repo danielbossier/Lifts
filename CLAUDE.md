@@ -67,11 +67,11 @@ Key functions:
 - `saveSession(workoutId, sets)` — persists the session and advances `nextWorkoutIndex` based on the workout that was *actually completed* (not just `+1`), so manually selecting an out-of-order workout keeps the rotation coherent
 - `getRepRangeOverrides()` / `saveRepRangeOverride(id, [lo, hi])` / `clearRepRangeOverride(id)` — rep range customization
 - `getPersonalRecords()` — scans all sessions and returns the best set per exercise per side: highest weight (ties broken by reps) for weight-based, longest hold for time-based
-- `saveDraft(workoutIndex, sets, workoutStart)` / `loadDraft()` / `clearDraft()` — persists in-progress workout state (including workout timer start timestamp) so a page refresh doesn't lose data
+- `saveDraft(workoutIndex, sets, workoutStart, lastSetAt, capSets)` / `loadDraft()` / `clearDraft()` — persists in-progress workout state (workout timer start timestamp, per-exercise last-set timestamps, and the 2-set toggle) so a page refresh doesn't lose data
 
 ### WorkoutView (`src/views/WorkoutView.jsx`)
 
-Core logic lives here. On each render, exercises are resolved by merging rep range overrides into the hardcoded data (`resolveExercises`), then:
+Core logic lives here. On each render, exercises are resolved by merging rep range overrides into the hardcoded data and applying the 2-set cap (`buildExercises` = `resolveExercises` + `applySetCap`), then:
 
 - `buildInitialSets(exercises)` — constructs blank set state, pre-filling weight from the most recent session for that exercise+side; auto-increments weight by 5 if last reps hit the top of the range
 - `computeGoals(exercises)` — per-set goal values derived from last session:
@@ -81,7 +81,11 @@ Core logic lives here. On each render, exercises are resolved by merging rep ran
 
 **Draft validation:** When loading a draft, the code checks that every exercise in the current workout has a corresponding entry in `draft.sets`. If any are missing (e.g. stale draft from a previous program structure), the draft is discarded and sets are rebuilt from history. This prevents crashes when the program changes.
 
-**Workout timer:** Starts when the first set is logged. The start timestamp (`workoutStart`) is persisted in the draft so the timer survives page refreshes. Displayed in the header next to the date. Resets when switching workouts or starting the next workout.
+**2-Set Day toggle:** `capSets` (state in `WorkoutView`) caps every exercise at 2 sets via `applySetCap` — exercises already programmed for 1 or 2 sets are untouched, only 3-set exercises shrink. The toggle button is disabled once `workoutStart` is set (i.e. after the first set of the session is logged), so there's never a mismatch between already-logged data and a reshaped exercise list. It always starts `false` for a fresh session — switching workouts (`selectWorkout`) or starting the next one (`handleStartNext`) resets it.
+
+**Workout timer:** Starts when the first set is logged. The start timestamp (`workoutStart`) is persisted in the draft so the timer survives page refreshes. Displayed in the header next to the date. Resets when switching workouts or starting the next workout. The same 1Hz interval also drives the per-exercise rest clocks below (shared `now` state) rather than running a second timer.
+
+**Per-exercise rest timers:** `lastSetAt` (state in `WorkoutView`, `{ [exerciseId]: timestampMs }`) records when each exercise's most recent set was logged, independent of other exercises. Each `ExerciseCard` receives its own `restSeconds` (derived from `now - lastSetAt[ex.id]`) and shows a small "Rest m:ss" badge next to its rep-range label — only while that exercise still has incomplete sets. This replaced an earlier single global rest banner that reset to whichever exercise was touched most recently, which lost track of exercises still resting when alternating between lifts.
 
 **Workout selector:** A pill row in the header lets the user pick any of the 3 workouts. The rotation's suggested next workout is indicated with a green dot. Switching pills resets `sets` state via `selectWorkout(index)`.
 
@@ -89,7 +93,7 @@ Core logic lives here. On each render, exercises are resolved by merging rep ran
 
 ### Component routing
 
-`ExerciseCard` receives `exercise`, `sets[ex.id]`, and `goals[ex.id]`, then renders one of four set-row components based on `exercise.tracking`:
+`ExerciseCard` receives `exercise`, `sets[ex.id]`, `goals[ex.id]`, and `restSeconds` (nullable, see above), then renders one of four set-row components based on `exercise.tracking`:
 - `NormalSetRow` — weight + reps + goal
 - `PerSideSetRow` — two rows (L/R) per set, weight + reps + separate L/R goals
 - `TimeSetRow` — seconds + goal (no weight)
