@@ -1,4 +1,7 @@
 // tracking: 'normal' | 'perArm' | 'perLeg' | 'perSide' | 'time' | 'timePerSide'
+// maxWeight (optional): heaviest available load — weight auto-increment stops here and goals progress reps instead
+const DB_MAX_WEIGHT = 100
+
 export const WORKOUTS = [
   {
     id: 'A1',
@@ -19,6 +22,7 @@ export const WORKOUTS = [
         sets: 3,
         repRange: [5, 7],
         tracking: 'normal',
+        maxWeight: DB_MAX_WEIGHT,
       },
       {
         id: 'incline-db-row',
@@ -35,6 +39,7 @@ export const WORKOUTS = [
         sets: 3,
         repRange: [5, 7],
         tracking: 'normal',
+        maxWeight: DB_MAX_WEIGHT,
       },
       {
         id: 'incline-db-fly',
@@ -43,6 +48,7 @@ export const WORKOUTS = [
         sets: 2,
         repRange: [8, 10],
         tracking: 'normal',
+        maxWeight: DB_MAX_WEIGHT,
       },
       {
         id: 'incline-db-curl',
@@ -105,6 +111,7 @@ export const WORKOUTS = [
         sets: 3,
         repRange: [8, 10],
         tracking: 'normal',
+        maxWeight: DB_MAX_WEIGHT,
       },
       {
         id: 'db-step-up',
@@ -121,6 +128,7 @@ export const WORKOUTS = [
         sets: 3,
         repRange: [8, 10],
         tracking: 'normal',
+        maxWeight: DB_MAX_WEIGHT,
       },
       {
         id: 'calf-raise-lp',
@@ -151,6 +159,7 @@ export const WORKOUTS = [
         sets: 3,
         repRange: [5, 7],
         tracking: 'normal',
+        maxWeight: DB_MAX_WEIGHT,
       },
       {
         id: 'one-arm-db-row',
@@ -159,6 +168,7 @@ export const WORKOUTS = [
         sets: 3,
         repRange: [5, 7],
         tracking: 'perArm',
+        maxWeight: DB_MAX_WEIGHT,
       },
       {
         id: 'flat-db-fly',
@@ -167,6 +177,7 @@ export const WORKOUTS = [
         sets: 2,
         repRange: [8, 10],
         tracking: 'normal',
+        maxWeight: DB_MAX_WEIGHT,
       },
       {
         id: 'vbar-pulldown',
@@ -207,6 +218,7 @@ export const WORKOUTS = [
         sets: 2,
         repRange: [8, 10],
         tracking: 'normal',
+        maxWeight: DB_MAX_WEIGHT,
       },
       {
         id: 'rope-crunch',

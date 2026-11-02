@@ -34,6 +34,8 @@ Single source of truth for all exercises. Each exercise has a `tracking` field t
 
 `repRange: [lo, hi]` — for time-based exercises this is seconds, not reps. `lo` is the fallback goal when there is no history.
 
+`maxWeight` (optional) — heaviest available load (dumbbell exercises use `DB_MAX_WEIGHT = 100`, i.e. the heaviest dumbbell). Weight auto-increment is capped here, and once at the cap the goal logic progresses reps past the range instead (see `computeGoals`). Note: some ids are legacy and don't match the name (e.g. `incline-db-row` is Cable Row), so `maxWeight` is set explicitly per exercise rather than inferred from the id.
+
 `exercise.id` is stable across workouts — `getLastSets` searches all sessions in reverse so history is shared across days for the same exercise.
 
 ### Storage layer (`src/data/storage.js`)
@@ -77,9 +79,10 @@ Key functions:
 
 Core logic lives here. On each render, exercises are resolved by merging rep range overrides into the hardcoded data and applying the 2-set cap (`buildExercises` = `resolveExercises` + `applySetCap`), then:
 
-- `buildInitialSets(exercises)` — constructs blank set state, pre-filling weight from the most recent session for that exercise+side; auto-increments weight by 5 only if *every* set in that last session hit the top of the rep range (one missed set withholds the bump for all sets)
+- `buildInitialSets(exercises)` — constructs blank set state, pre-filling weight from the most recent session for that exercise+side; auto-increments weight by 5 only if *every* set in that last session hit the top of the rep range (one missed set withholds the bump for all sets); the bump never exceeds `exercise.maxWeight`
 - `computeGoals(exercises)` — per-set goal values derived from last session:
   - Rep-based: last reps ≥ hi (weight just bumped) → goal = lo; last reps ≥ lo → goal = hi; otherwise → lo; no history → lo
+  - At `maxWeight` (last weight ≥ cap): last reps ≥ hi → goal = last reps + 1, since the weight can't bump — reps keep progressing past the range
   - Time-based: last seconds + 5, capped at hi; no history → lo
 - Goals are computed fresh each render (reads localStorage) — they don't need to be state
 

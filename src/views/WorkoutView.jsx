@@ -28,7 +28,12 @@ function getSides(tracking) {
   return isBilateral(tracking) ? ['left', 'right'] : ['main']
 }
 
+function isAtMaxWeight(ex, weight) {
+  return ex.maxWeight != null && weight != null && weight !== '' && Number(weight) >= ex.maxWeight
+}
+
 // Pre-fill weight from last session; increment by 5 only if every set last time hit the top of the range.
+// The increment is capped at exercise.maxWeight when one is set.
 function buildInitialSets(exercises) {
   const sets = {}
   for (const ex of exercises) {
@@ -41,7 +46,8 @@ function buildInitialSets(exercises) {
       sets[ex.id][side] = Array.from({ length: ex.sets }, (_, i) => {
         if (timeBased) return { seconds: '' }
         const lastWeight = history?.[i]?.weight ?? ''
-        const weight = lastWeight !== '' && allHitTop ? lastWeight + 5 : lastWeight
+        const bumped = Math.min(lastWeight + 5, ex.maxWeight ?? Infinity)
+        const weight = lastWeight !== '' && allHitTop && !isAtMaxWeight(ex, lastWeight) ? bumped : lastWeight
         return { weight, reps: '' }
       })
     }
@@ -52,6 +58,7 @@ function buildInitialSets(exercises) {
 // Per-set goal values derived from last session performance.
 // Time-based: add 5s to last hold, capped at range ceiling.
 // Rep-based: hit top of range last time (weight bumps) → back to lo; hit range → push to hi; below range → lo.
+// At maxWeight the weight can't bump, so hitting the top of the range → last reps + 1 instead.
 function computeGoals(exercises) {
   const goals = {}
   for (const ex of exercises) {
@@ -68,7 +75,8 @@ function computeGoals(exercises) {
           return secs > 0 ? Math.min(secs + 5, hi) : lo
         }
         const reps = Number(last.reps)
-        return reps >= hi ? lo : reps >= lo ? hi : lo
+        if (reps >= hi) return isAtMaxWeight(ex, last.weight) ? reps + 1 : lo
+        return reps >= lo ? hi : lo
       })
     }
   }
