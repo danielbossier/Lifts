@@ -86,7 +86,7 @@ Core logic lives here. On each render, exercises are resolved by merging rep ran
   - Time-based: last seconds + 5, capped at hi; no history → lo
 - Goals are computed fresh each render (reads localStorage) — they don't need to be state
 
-**Draft validation:** When loading a draft, the code checks that every exercise in the current workout has a corresponding entry in `draft.sets`. If any are missing (e.g. stale draft from a previous program structure), the draft is discarded and sets are rebuilt from history. This prevents crashes when the program changes.
+**Draft validation:** When loading a draft, the code checks (`draftMatchesExercise`) that every exercise in the current workout has an entry in `draft.sets` with every side its `tracking` requires, each holding exactly `ex.sets` rows. If any don't match (e.g. stale draft from before an exercise's tracking type or set count changed), the draft is discarded and sets are rebuilt from history. This prevents crashes when the program changes.
 
 **2-Set Day toggle:** `capSets` (state in `WorkoutView`) caps every exercise at 2 sets via `applySetCap` — exercises already programmed for 1 or 2 sets are untouched, only 3-set exercises shrink. The toggle button is disabled once `workoutStart` is set (i.e. after the first set of the session is logged), so there's never a mismatch between already-logged data and a reshaped exercise list. It always starts `false` for a fresh session — switching workouts (`selectWorkout`) or starting the next one (`handleStartNext`) resets it.
 

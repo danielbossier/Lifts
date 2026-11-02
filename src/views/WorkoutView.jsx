@@ -83,6 +83,12 @@ function computeGoals(exercises) {
   return goals
 }
 
+// A draft entry is only usable if it has every side this exercise tracks, each with the right number of sets.
+// Guards against stale drafts saved before an exercise's tracking type or set count changed.
+function draftMatchesExercise(exSets, ex) {
+  return exSets != null && getSides(ex.tracking).every(side => exSets[side]?.length === ex.sets)
+}
+
 function buildExercises(workoutIndex, capSets) {
   const resolved = resolveExercises(WORKOUTS[workoutIndex].exercises, getRepRangeOverrides())
   return applySetCap(resolved, capSets)
@@ -101,7 +107,7 @@ export default function WorkoutView() {
   const exercises = buildExercises(workoutIndex, capSets)
   const [sets, setSets] = useState(() => {
     const draft = loadDraft()
-    if (draft != null && exercises.every(ex => draft.sets[ex.id] != null)) {
+    if (draft != null && exercises.every(ex => draftMatchesExercise(draft.sets?.[ex.id], ex))) {
       return draft.sets
     }
     return buildInitialSets(exercises)
