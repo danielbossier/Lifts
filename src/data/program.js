@@ -1,5 +1,6 @@
 // tracking: 'normal' | 'perArm' | 'perLeg' | 'perSide' | 'time' | 'timePerSide'
 // maxWeight (optional): heaviest available load — weight auto-increment stops here and goals progress reps instead
+// hidden (optional): left out of the workout and Settings, but past logs still show in History/Records/CSV
 // barbell (optional): { id, name } of a barbell alternative selectable per session. It has its own id so its
 //   history/goals/PRs stay separate from the dumbbell version, shares the base exercise's rep range, and has no maxWeight.
 const DB_MAX_WEIGHT = 100
@@ -9,14 +10,6 @@ export const WORKOUTS = [
     id: 'A1',
     label: 'A1 – Upper',
     exercises: [
-      {
-        id: 'pull-up',
-        name: 'Weighted Pull Up',
-        muscleGroup: 'Back',
-        sets: 3,
-        repRange: [5, 7],
-        tracking: 'normal',
-      },
       {
         id: 'flat-db-press',
         name: 'Flat Dumbbell Press',
@@ -28,11 +21,11 @@ export const WORKOUTS = [
         barbell: { id: 'flat-bb-press', name: 'Flat Barbell Press' },
       },
       {
-        id: 'incline-db-row',
-        name: 'Cable Row',
+        id: 'pull-up',
+        name: 'Weighted Pull Up',
         muscleGroup: 'Back',
         sets: 3,
-        repRange: [8, 10],
+        repRange: [5, 7],
         tracking: 'normal',
       },
       {
@@ -45,13 +38,12 @@ export const WORKOUTS = [
         maxWeight: DB_MAX_WEIGHT,
       },
       {
-        id: 'incline-db-fly',
-        name: 'Incline Dumbbell Fly',
-        muscleGroup: 'Chest',
-        sets: 2,
+        id: 'incline-db-row',
+        name: 'Cable Row',
+        muscleGroup: 'Back',
+        sets: 3,
         repRange: [8, 10],
         tracking: 'normal',
-        maxWeight: DB_MAX_WEIGHT,
       },
       {
         id: 'incline-db-curl',
@@ -62,12 +54,13 @@ export const WORKOUTS = [
         tracking: 'normal',
       },
       {
-        id: 'overhead-cable-ext',
-        name: 'Skull Crushers',
-        muscleGroup: 'Triceps',
-        sets: 3,
+        id: 'incline-db-fly',
+        name: 'Incline Dumbbell Fly',
+        muscleGroup: 'Chest',
+        sets: 2,
         repRange: [8, 10],
         tracking: 'normal',
+        maxWeight: DB_MAX_WEIGHT,
       },
       {
         id: 'face-pull',
@@ -75,6 +68,14 @@ export const WORKOUTS = [
         muscleGroup: 'Rear Delts',
         sets: 2,
         repRange: [10, 12],
+        tracking: 'normal',
+      },
+      {
+        id: 'overhead-cable-ext',
+        name: 'Skull Crushers',
+        muscleGroup: 'Triceps',
+        sets: 3,
+        repRange: [8, 10],
         tracking: 'normal',
       },
       {
@@ -239,6 +240,7 @@ export const WORKOUTS = [
         sets: 1,
         repRange: [10, 12],
         tracking: 'normal',
+        hidden: true,
       },
     ],
   },

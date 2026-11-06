@@ -32,6 +32,7 @@ export default function PRView() {
             <div className="pr-workout-label">{workout.label}</div>
             {workout.exercises.flatMap(getExerciseVariants).map(ex => {
               const exRec = records[ex.id]
+              if (ex.hidden && !exRec) return null
               const sided = isSided(ex.tracking)
               return (
                 <div key={ex.id} className="pr-row">

@@ -8,7 +8,7 @@ function buildSections() {
   const seen = new Set()
   return WORKOUTS.map(workout => {
     const unique = workout.exercises.filter(ex => {
-      if (seen.has(ex.id)) return false
+      if (ex.hidden || seen.has(ex.id)) return false
       seen.add(ex.id)
       return true
     })

@@ -36,6 +36,8 @@ Single source of truth for all exercises. Each exercise has a `tracking` field t
 
 `maxWeight` (optional) — heaviest available load (dumbbell exercises use `DB_MAX_WEIGHT = 100`, i.e. the heaviest dumbbell). Weight auto-increment is capped here, and once at the cap the goal logic progresses reps past the range instead (see `computeGoals`). Note: some ids are legacy and don't match the name (e.g. `incline-db-row` is Cable Row), so `maxWeight` is set explicitly per exercise rather than inferred from the id.
 
+`hidden` (optional) — leaves the exercise out of `WorkoutView` and Settings while keeping it in the data, so old logs still show in History, Records (only if a record exists) and the CSV export. Currently set on Hanging Leg Raise.
+
 `barbell` (optional) — `{ id, name }` for a barbell alternative (currently Flat and Incline Dumbbell Press). `resolveEquipment(ex, equipment)` returns the chosen variant with `baseId` (the dumbbell id) and `equipment` (`'dumbbell'|'barbell'`) set. The barbell variant has its own `id` so its history, goals and PRs are kept apart from the dumbbell numbers (dumbbell weight is per hand, barbell is total), shares the base exercise's rep range override (keyed by `baseId`), and has no `maxWeight`. `getExerciseVariants(ex)` lists every variant, which History/Records/CSV export use to find logged data under either id.
 
 `exercise.id` is stable across workouts — `getLastSets` searches all sessions in reverse so history is shared across days for the same exercise.

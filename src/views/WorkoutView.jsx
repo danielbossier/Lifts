@@ -93,7 +93,8 @@ function draftMatchesExercise(exSets, ex) {
 }
 
 function buildExercises(workoutIndex, capSets, equipment) {
-  const resolved = resolveExercises(WORKOUTS[workoutIndex].exercises, getRepRangeOverrides(), equipment)
+  const visible = WORKOUTS[workoutIndex].exercises.filter(ex => !ex.hidden)
+  const resolved = resolveExercises(visible, getRepRangeOverrides(), equipment)
   return applySetCap(resolved, capSets)
 }
 
@@ -197,7 +198,8 @@ export default function WorkoutView() {
 
   function handleComplete() {
     const normalized = {}
-    for (const [exId, sides] of Object.entries(sets)) {
+    for (const { id: exId } of exercises) {
+      const sides = sets[exId]
       normalized[exId] = {}
       for (const [side, rows] of Object.entries(sides)) {
         normalized[exId][side] = rows.map(row =>
