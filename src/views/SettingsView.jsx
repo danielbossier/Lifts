@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { WORKOUTS } from '../data/program'
-import { getRepRangeOverrides, saveRepRangeOverride, clearRepRangeOverride } from '../data/storage'
+import { getRepRangeOverrides, saveRepRangeOverride, clearRepRangeOverride, getAllSessions } from '../data/storage'
+import { sessionsToCsv, downloadCsv } from '../utils/csv'
 
 // Each unique exercise once, grouped under its first workout
 function buildSections() {
@@ -66,6 +67,13 @@ export default function SettingsView() {
     setRanges(prev => ({ ...prev, [exercise.id]: { lo: String(defLo), hi: String(defHi) } }))
   }
 
+  const sessionCount = getAllSessions().length
+
+  function handleExport() {
+    const csv = sessionsToCsv(getAllSessions().reverse())
+    downloadCsv(`workouts-${new Date().toISOString().slice(0, 10)}.csv`, csv)
+  }
+
   return (
     <div className="settings-view">
       <header className="settings-header">
@@ -74,6 +82,19 @@ export default function SettingsView() {
       </header>
 
       <div className="settings-content">
+        <section className="settings-section">
+          <h2 className="settings-workout-label">Data</h2>
+          <div className="settings-row">
+            <span className="settings-exercise-name">
+              Export history
+              <span className="settings-subtext">{sessionCount} {sessionCount === 1 ? 'session' : 'sessions'} · one row per set</span>
+            </span>
+            <button className="export-btn" onClick={handleExport} disabled={sessionCount === 0}>
+              Download CSV
+            </button>
+          </div>
+        </section>
+
         {SECTIONS.map(({ workout, exercises }) => (
           <section key={workout.id} className="settings-section">
             <h2 className="settings-workout-label">{workout.label}</h2>

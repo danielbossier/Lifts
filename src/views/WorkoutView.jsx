@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react'
-import { WORKOUTS, WORKOUT_ROTATION } from '../data/program'
+import { WORKOUTS, WORKOUT_ROTATION, resolveEquipment } from '../data/program'
 import { getNextWorkoutIndex, getLastSets, saveSession, getRepRangeOverrides, saveDraft, loadDraft, clearDraft } from '../data/storage'
 import { formatElapsed } from '../utils/time'
 import ExerciseCard from '../components/ExerciseCard'
 
-function resolveExercises(exercises, overrides) {
-  return exercises.map(ex =>
-    overrides[ex.id] ? { ...ex, repRange: overrides[ex.id] } : ex
-  )
+// Apply the chosen equipment, then rep range overrides (keyed by the base id, so both variants share one range)
+function resolveExercises(exercises, overrides, equipment) {
+  return exercises.map(base => {
+    const ex = resolveEquipment(base, equipment[base.id])
+    const override = overrides[ex.baseId ?? ex.id]
+    return override ? { ...ex, repRange: override } : ex
+  })
 }
 
 // Cap every exercise at 2 sets for an intensity-focused session; leaves 1- and 2-set exercises untouched.
@@ -89,8 +92,8 @@ function draftMatchesExercise(exSets, ex) {
   return exSets != null && getSides(ex.tracking).every(side => exSets[side]?.length === ex.sets)
 }
 
-function buildExercises(workoutIndex, capSets) {
-  const resolved = resolveExercises(WORKOUTS[workoutIndex].exercises, getRepRangeOverrides())
+function buildExercises(workoutIndex, capSets, equipment) {
+  const resolved = resolveExercises(WORKOUTS[workoutIndex].exercises, getRepRangeOverrides(), equipment)
   return applySetCap(resolved, capSets)
 }
 
@@ -104,7 +107,9 @@ export default function WorkoutView() {
   const workout = WORKOUTS[workoutIndex]
 
   const [capSets, setCapSets] = useState(() => loadDraft()?.capSets ?? false)
-  const exercises = buildExercises(workoutIndex, capSets)
+  // { [baseExerciseId]: 'barbell' } — absent means dumbbell
+  const [equipment, setEquipment] = useState(() => loadDraft()?.equipment ?? {})
+  const exercises = buildExercises(workoutIndex, capSets, equipment)
   const [sets, setSets] = useState(() => {
     const draft = loadDraft()
     if (draft != null && exercises.every(ex => draftMatchesExercise(draft.sets?.[ex.id], ex))) {
@@ -124,8 +129,8 @@ export default function WorkoutView() {
 
   // Auto-save in-progress sets so a page refresh doesn't lose data
   useEffect(() => {
-    saveDraft(workoutIndex, sets, workoutStart, lastSetAt, capSets)
-  }, [workoutIndex, sets, workoutStart, lastSetAt, capSets])
+    saveDraft(workoutIndex, sets, workoutStart, lastSetAt, capSets, equipment)
+  }, [workoutIndex, sets, workoutStart, lastSetAt, capSets, equipment])
 
   // Workout duration timer — starts on first logged set; also drives the per-exercise rest clocks
   useEffect(() => {
@@ -146,7 +151,8 @@ export default function WorkoutView() {
     if (index === workoutIndex) return
     setWorkoutIndex(index)
     setCapSets(false)
-    setSets(buildInitialSets(buildExercises(index, false)))
+    setEquipment({})
+    setSets(buildInitialSets(buildExercises(index, false, {})))
     setLastSetAt({})
     setWorkoutStart(null)
     setWorkoutElapsed(0)
@@ -156,7 +162,20 @@ export default function WorkoutView() {
     if (workoutStart !== null) return
     const next = !capSets
     setCapSets(next)
-    setSets(buildInitialSets(buildExercises(workoutIndex, next)))
+    setSets(buildInitialSets(buildExercises(workoutIndex, next, equipment)))
+  }
+
+  // Swap one exercise between dumbbell and barbell. Locked once a set of it is logged.
+  // The old variant's entry is dropped so its pre-filled weights aren't saved as a session.
+  function toggleEquipment(current) {
+    if (lastSetAt[current.id] != null) return
+    const nextEquipment = { ...equipment, [current.baseId]: current.equipment === 'barbell' ? 'dumbbell' : 'barbell' }
+    const swapped = buildExercises(workoutIndex, capSets, nextEquipment).find(ex => ex.baseId === current.baseId)
+    setEquipment(nextEquipment)
+    setSets(prev => {
+      const { [current.id]: _, ...rest } = prev
+      return { ...rest, ...buildInitialSets([swapped]) }
+    })
   }
 
   function updateSet(exerciseId, side, setIndex, field, value) {
@@ -198,7 +217,8 @@ export default function WorkoutView() {
     const next = getNextWorkoutIndex()
     setWorkoutIndex(next)
     setCapSets(false)
-    setSets(buildInitialSets(buildExercises(next, false)))
+    setEquipment({})
+    setSets(buildInitialSets(buildExercises(next, false, {})))
     setCompleted(false)
     setLastSetAt({})
     setWorkoutStart(null)
@@ -262,6 +282,8 @@ export default function WorkoutView() {
             sets={sets[ex.id]}
             goals={goals[ex.id]}
             restSeconds={lastSetAt[ex.id] != null ? Math.floor((now - lastSetAt[ex.id]) / 1000) : null}
+            equipmentLocked={lastSetAt[ex.id] != null}
+            onToggleEquipment={() => toggleEquipment(ex)}
             onUpdateSet={(side, setIndex, field, value) =>
               updateSet(ex.id, side, setIndex, field, value)
             }

@@ -1,5 +1,5 @@
 import { getPersonalRecords } from '../data/storage'
-import { WORKOUTS } from '../data/program'
+import { WORKOUTS, getExerciseVariants } from '../data/program'
 
 function isSided(tracking) {
   return tracking === 'perArm' || tracking === 'perLeg' || tracking === 'timePerSide'
@@ -30,7 +30,7 @@ export default function PRView() {
         {WORKOUTS.map(workout => (
           <div key={workout.id} className="pr-section">
             <div className="pr-workout-label">{workout.label}</div>
-            {workout.exercises.map(ex => {
+            {workout.exercises.flatMap(getExerciseVariants).map(ex => {
               const exRec = records[ex.id]
               const sided = isSided(ex.tracking)
               return (

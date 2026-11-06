@@ -36,6 +36,8 @@ Single source of truth for all exercises. Each exercise has a `tracking` field t
 
 `maxWeight` (optional) — heaviest available load (dumbbell exercises use `DB_MAX_WEIGHT = 100`, i.e. the heaviest dumbbell). Weight auto-increment is capped here, and once at the cap the goal logic progresses reps past the range instead (see `computeGoals`). Note: some ids are legacy and don't match the name (e.g. `incline-db-row` is Cable Row), so `maxWeight` is set explicitly per exercise rather than inferred from the id.
 
+`barbell` (optional) — `{ id, name }` for a barbell alternative (currently Flat and Incline Dumbbell Press). `resolveEquipment(ex, equipment)` returns the chosen variant with `baseId` (the dumbbell id) and `equipment` (`'dumbbell'|'barbell'`) set. The barbell variant has its own `id` so its history, goals and PRs are kept apart from the dumbbell numbers (dumbbell weight is per hand, barbell is total), shares the base exercise's rep range override (keyed by `baseId`), and has no `maxWeight`. `getExerciseVariants(ex)` lists every variant, which History/Records/CSV export use to find logged data under either id.
+
 `exercise.id` is stable across workouts — `getLastSets` searches all sessions in reverse so history is shared across days for the same exercise.
 
 ### Storage layer (`src/data/storage.js`)
@@ -69,9 +71,11 @@ Key functions:
 - `saveSession(workoutId, sets)` — persists the session and advances `nextWorkoutIndex` based on the workout that was *actually completed* (not just `+1`), so manually selecting an out-of-order workout keeps the rotation coherent
 - `getRepRangeOverrides()` / `saveRepRangeOverride(id, [lo, hi])` / `clearRepRangeOverride(id)` — rep range customization
 - `getPersonalRecords()` — scans all sessions and returns the best set per exercise per side: highest weight (ties broken by reps) for weight-based, longest hold for time-based
-- `saveDraft(workoutIndex, sets, workoutStart, lastSetAt, capSets)` / `loadDraft()` / `clearDraft()` — persists in-progress workout state (workout timer start timestamp, per-exercise last-set timestamps, and the 2-set toggle) so a page refresh doesn't lose data
+- `saveDraft(workoutIndex, sets, workoutStart, lastSetAt, capSets, equipment)` / `loadDraft()` / `clearDraft()` — persists in-progress workout state (workout timer start timestamp, per-exercise last-set timestamps, the 2-set toggle, and the DB/BB choices) so a page refresh doesn't lose data
 
 ### Utilities (`src/utils/time.js`)
+
+`src/utils/csv.js` — `sessionsToCsv(sessions)` turns sessions into a long-format CSV (one row per set: date, workout, exercise, exercise_id, muscle_group, side, set, weight, reps, seconds; sets without reps/seconds are skipped). `downloadCsv(filename, csv)` triggers a browser download. Used by the Export button in Settings.
 
 `formatElapsed(secs)` — formats a seconds count as `m:ss`, or `h:mm:ss` past an hour. Shared by the workout-duration display and the per-exercise rest badges (both in `WorkoutView`/`ExerciseCard`).
 
@@ -89,6 +93,8 @@ Core logic lives here. On each render, exercises are resolved by merging rep ran
 **Draft validation:** When loading a draft, the code checks (`draftMatchesExercise`) that every exercise in the current workout has an entry in `draft.sets` with every side its `tracking` requires, each holding exactly `ex.sets` rows. If any don't match (e.g. stale draft from before an exercise's tracking type or set count changed), the draft is discarded and sets are rebuilt from history. This prevents crashes when the program changes.
 
 **2-Set Day toggle:** `capSets` (state in `WorkoutView`) caps every exercise at 2 sets via `applySetCap` — exercises already programmed for 1 or 2 sets are untouched, only 3-set exercises shrink. The toggle button is disabled once `workoutStart` is set (i.e. after the first set of the session is logged), so there's never a mismatch between already-logged data and a reshaped exercise list. It always starts `false` for a fresh session — switching workouts (`selectWorkout`) or starting the next one (`handleStartNext`) resets it.
+
+**DB/BB toggle:** `equipment` (state in `WorkoutView`, `{ [baseId]: 'barbell' }`, absent = dumbbell) is applied in `resolveExercises` before rep range overrides. `ExerciseCard` shows a DB | BB switch for exercises with a `barbell` option. `toggleEquipment` rebuilds only that exercise's sets from the new variant's history and drops the old variant's entry, so its pre-filled weights don't get saved. The switch locks once a set of that exercise is logged. It resets to dumbbell for a new session (`selectWorkout` / `handleStartNext`) and is kept in the draft.
 
 **Workout timer:** Starts when the first set is logged. The start timestamp (`workoutStart`) is persisted in the draft so the timer survives page refreshes. Displayed in the header next to the date. Resets when switching workouts or starting the next workout. The same 1Hz interval also drives the per-exercise rest clocks below (shared `now` state) rather than running a second timer.
 
@@ -118,6 +124,8 @@ Displays personal records for every exercise, grouped by workout. For each exerc
 Data sourced from `getPersonalRecords()` in storage.js.
 
 ### Settings view (`src/views/SettingsView.jsx`)
+
+A **Data** section at the top has a Download CSV button (see `src/utils/csv.js`), disabled when there are no sessions.
 
 Lists all unique exercises once (deduplicated by `exercise.id`, grouped under their first workout section). Each row shows the exercise name and two number inputs for `[lo, hi]`. Saves to localStorage on blur. Overridden ranges show in blue with a ↺ reset button. Clearing an override restores the hardcoded default.
 

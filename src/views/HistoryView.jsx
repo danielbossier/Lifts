@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { getAllSessions } from '../data/storage'
-import { getWorkoutById } from '../data/program'
+import { getWorkoutById, getExerciseVariants } from '../data/program'
 
 // 'YYYY-MM-DD' → 'Jun 15, 2026'
 function formatDate(dateStr) {
@@ -65,7 +65,7 @@ function SessionCard({ session }) {
           {!hasData && (
             <p className="session-empty">No sets logged.</p>
           )}
-          {workout.exercises.map(ex => {
+          {workout.exercises.flatMap(getExerciseVariants).map(ex => {
             const exSets = session.sets[ex.id]
             if (!exSets) return null
             const rows = summariseSets(exSets, ex.tracking)

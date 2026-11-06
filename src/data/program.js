@@ -1,5 +1,7 @@
 // tracking: 'normal' | 'perArm' | 'perLeg' | 'perSide' | 'time' | 'timePerSide'
 // maxWeight (optional): heaviest available load — weight auto-increment stops here and goals progress reps instead
+// barbell (optional): { id, name } of a barbell alternative selectable per session. It has its own id so its
+//   history/goals/PRs stay separate from the dumbbell version, shares the base exercise's rep range, and has no maxWeight.
 const DB_MAX_WEIGHT = 100
 
 export const WORKOUTS = [
@@ -23,6 +25,7 @@ export const WORKOUTS = [
         repRange: [5, 7],
         tracking: 'normal',
         maxWeight: DB_MAX_WEIGHT,
+        barbell: { id: 'flat-bb-press', name: 'Flat Barbell Press' },
       },
       {
         id: 'incline-db-row',
@@ -160,6 +163,7 @@ export const WORKOUTS = [
         repRange: [5, 7],
         tracking: 'normal',
         maxWeight: DB_MAX_WEIGHT,
+        barbell: { id: 'incline-bb-press', name: 'Incline Barbell Press' },
       },
       {
         id: 'one-arm-db-row',
@@ -244,4 +248,17 @@ export const WORKOUT_ROTATION = ['A1', 'B', 'A2']
 
 export function getWorkoutById(id) {
   return WORKOUTS.find(w => w.id === id)
+}
+
+// Resolve an exercise to the chosen equipment ('dumbbell' | 'barbell').
+// Exercises with a barbell option get baseId (the dumbbell id, used for rep range overrides) and equipment set.
+export function resolveEquipment(ex, equipment = 'dumbbell') {
+  if (!ex.barbell) return ex
+  if (equipment !== 'barbell') return { ...ex, baseId: ex.id, equipment: 'dumbbell' }
+  return { ...ex, ...ex.barbell, maxWeight: undefined, baseId: ex.id, equipment: 'barbell' }
+}
+
+// Every equipment variant of an exercise — for views that list logged data across all variants
+export function getExerciseVariants(ex) {
+  return ex.barbell ? [resolveEquipment(ex, 'dumbbell'), resolveEquipment(ex, 'barbell')] : [ex]
 }

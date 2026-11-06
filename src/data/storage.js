@@ -105,8 +105,8 @@ export function clearRepRangeOverride(exerciseId) {
 
 const DRAFT_KEY = 'wt-v1-draft'
 
-export function saveDraft(workoutIndex, sets, workoutStart = null, lastSetAt = {}, capSets = false) {
-  localStorage.setItem(DRAFT_KEY, JSON.stringify({ workoutIndex, sets, workoutStart, lastSetAt, capSets }))
+export function saveDraft(workoutIndex, sets, workoutStart = null, lastSetAt = {}, capSets = false, equipment = {}) {
+  localStorage.setItem(DRAFT_KEY, JSON.stringify({ workoutIndex, sets, workoutStart, lastSetAt, capSets, equipment }))
 }
 
 export function loadDraft() {

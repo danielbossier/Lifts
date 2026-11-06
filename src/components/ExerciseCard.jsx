@@ -28,7 +28,7 @@ function repRangeLabel(exercise) {
   return `${lo}–${hi} ${unit}${perNote}`
 }
 
-export default function ExerciseCard({ exercise, sets, goals, restSeconds, onUpdateSet }) {
+export default function ExerciseCard({ exercise, sets, goals, restSeconds, equipmentLocked, onToggleEquipment, onUpdateSet }) {
   const { tracking } = exercise
   const isPerSide = tracking === 'perArm' || tracking === 'perLeg'
   const isTime = tracking === 'time'
@@ -40,7 +40,23 @@ export default function ExerciseCard({ exercise, sets, goals, restSeconds, onUpd
       <div className="exercise-header">
         <div className="exercise-name-wrap">
           <span className="exercise-name">{exercise.name}</span>
-          <span className="exercise-muscle-tag">{exercise.muscleGroup}</span>
+          <div className="exercise-tag-row">
+            <span className="exercise-muscle-tag">{exercise.muscleGroup}</span>
+            {exercise.equipment && (
+              <div className="equipment-toggle">
+                {['dumbbell', 'barbell'].map(eq => (
+                  <button
+                    key={eq}
+                    className={`equipment-option ${exercise.equipment === eq ? 'active' : ''}`}
+                    disabled={equipmentLocked}
+                    onClick={() => exercise.equipment !== eq && onToggleEquipment()}
+                  >
+                    {eq === 'dumbbell' ? 'DB' : 'BB'}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         <div className="exercise-header-meta">
           <span className="exercise-meta">{repRangeLabel(exercise)}</span>
