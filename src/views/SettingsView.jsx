@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { WORKOUTS } from '../data/program'
-import { getRepRangeOverrides, saveRepRangeOverride, clearRepRangeOverride, getAllSessions } from '../data/storage'
-import { sessionsToCsv, downloadCsv } from '../utils/csv'
+import { getRepRangeOverrides, saveRepRangeOverride, clearRepRangeOverride, getAllSessions, importSessions } from '../data/storage'
+import { sessionsToCsv, downloadCsv, csvToSessions } from '../utils/csv'
 
 // Each unique exercise once, grouped under its first workout
 function buildSections() {
@@ -67,11 +67,30 @@ export default function SettingsView() {
     setRanges(prev => ({ ...prev, [exercise.id]: { lo: String(defLo), hi: String(defHi) } }))
   }
 
-  const sessionCount = getAllSessions().length
+  const [sessionCount, setSessionCount] = useState(() => getAllSessions().length)
+  const [importMessage, setImportMessage] = useState(null)
+  const fileInput = useRef(null)
 
   function handleExport() {
     const csv = sessionsToCsv(getAllSessions().reverse())
     downloadCsv(`workouts-${new Date().toISOString().slice(0, 10)}.csv`, csv)
+  }
+
+  async function handleImport(e) {
+    const file = e.target.files[0]
+    e.target.value = '' // allow re-selecting the same file
+    if (!file) return
+    try {
+      const { sessions, skippedRows } = csvToSessions(await file.text())
+      const { added, duplicates } = importSessions(sessions)
+      const parts = [`Imported ${added} ${added === 1 ? 'session' : 'sessions'}`]
+      if (duplicates > 0) parts.push(`${duplicates} already on this device`)
+      if (skippedRows > 0) parts.push(`${skippedRows} invalid ${skippedRows === 1 ? 'row' : 'rows'} skipped`)
+      setImportMessage({ error: false, text: parts.join(' · ') })
+      setSessionCount(getAllSessions().length)
+    } catch (err) {
+      setImportMessage({ error: true, text: err.message })
+    }
   }
 
   return (
@@ -92,6 +111,24 @@ export default function SettingsView() {
             <button className="export-btn" onClick={handleExport} disabled={sessionCount === 0}>
               Download CSV
             </button>
+          </div>
+          <div className="settings-row">
+            <span className="settings-exercise-name">
+              Import history
+              <span className={`settings-subtext ${importMessage?.error ? 'is-error' : ''}`}>
+                {importMessage?.text ?? 'Adds sessions from an exported CSV'}
+              </span>
+            </span>
+            <button className="export-btn" onClick={() => fileInput.current.click()}>
+              Upload CSV
+            </button>
+            <input
+              ref={fileInput}
+              type="file"
+              accept=".csv,text/csv"
+              hidden
+              onChange={handleImport}
+            />
           </div>
         </section>
 

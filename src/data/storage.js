@@ -50,6 +50,42 @@ export function saveSession(workoutId, sets) {
   save(state)
 }
 
+// Merge sessions from a CSV import. Sessions already on this device are skipped: matched by id, or by
+// date + workout when the file has no session ids. Keeps sessions in chronological order (getLastSets
+// relies on it) and points the rotation at the workout after the most recent session.
+export function importSessions(incoming) {
+  const state = load()
+  const ids = new Set(state.sessions.map(s => s.id))
+  const dayKeys = new Set(state.sessions.map(s => `${s.date}|${s.workoutId}`))
+  let added = 0
+  let duplicates = 0
+  for (const session of incoming) {
+    const dayKey = `${session.date}|${session.workoutId}`
+    if (session.id ? ids.has(session.id) : dayKeys.has(dayKey)) {
+      duplicates++
+      continue
+    }
+    let id = session.id
+    if (!id) {
+      // No id in the file — derive one from the date, nudged until unique
+      let t = new Date(`${session.date}T12:00:00`).getTime()
+      while (ids.has(String(t))) t++
+      id = String(t)
+    }
+    state.sessions.push({ ...session, id })
+    ids.add(id)
+    dayKeys.add(dayKey)
+    added++
+  }
+  if (added > 0) {
+    state.sessions.sort((a, b) => a.date.localeCompare(b.date) || Number(a.id) - Number(b.id))
+    const lastIndex = WORKOUT_ROTATION.indexOf(state.sessions.at(-1).workoutId)
+    state.nextWorkoutIndex = (lastIndex + 1) % WORKOUT_ROTATION.length
+    save(state)
+  }
+  return { added, duplicates }
+}
+
 // All sessions newest-first, for the history view
 export function getAllSessions() {
   return [...load().sessions].reverse()

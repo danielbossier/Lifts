@@ -709,6 +709,10 @@ body {
   margin-top: 2px;
 }
 
+.settings-subtext.is-error {
+  color: #ff453a;
+}
+
 .export-btn {
   background: var(--accent);
   border: none;

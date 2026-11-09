@@ -74,12 +74,18 @@ Key functions:
 - `getLastSets(exerciseId, side)` — most recent set entries for an exercise+side, searched newest-first across all sessions
 - `saveSession(workoutId, sets)` — persists the session and advances `nextWorkoutIndex` based on the workout that was *actually completed* (not just `+1`), so manually selecting an out-of-order workout keeps the rotation coherent
 - `getRepRangeOverrides()` / `saveRepRangeOverride(id, [lo, hi])` / `clearRepRangeOverride(id)` — rep range customization
+- `importSessions(sessions)` — merges imported sessions, skipping ones already present (same id, or same date + workout when the file had no id; ids are then derived from the date). Re-sorts sessions chronologically (`getLastSets` depends on that order) and sets `nextWorkoutIndex` from the newest session. Returns `{ added, duplicates }`.
 - `getPersonalRecords()` — scans all sessions and returns the best set per exercise per side: highest weight (ties broken by reps) for weight-based, longest hold for time-based
 - `saveDraft(workoutIndex, sets, workoutStart, lastSetAt, capSets, equipment)` / `loadDraft()` / `clearDraft()` — persists in-progress workout state (workout timer start timestamp, per-exercise last-set timestamps, the 2-set toggle, and the DB/BB choices) so a page refresh doesn't lose data
 
 ### Utilities (`src/utils/time.js`)
 
-`src/utils/csv.js` — `sessionsToCsv(sessions)` turns sessions into a long-format CSV (one row per set: date, workout, exercise, exercise_id, muscle_group, side, set, weight, reps, seconds; sets without reps/seconds are skipped). `downloadCsv(filename, csv)` triggers a browser download. Used by the Export button in Settings.
+`src/utils/csv.js` — CSV export/import, used by the Data section in Settings:
+- `sessionsToCsv(sessions)` — long-format CSV, one row per set: date, session_id, workout, exercise, exercise_id, muscle_group, side, set, weight, reps, seconds. Every set is written, including unfinished ones (blank reps/seconds), so an import reproduces sessions exactly — the weight bump in `buildInitialSets` depends on *every* set of the last session hitting the top of the range.
+- `downloadCsv(filename, csv)` — triggers a browser download.
+- `csvToSessions(text)` — parses an export back into sessions. Columns are matched by header name; rows are grouped by `session_id`, or by date + workout for older exports without that column. Set entry shape (`seconds` vs `weight`/`reps`) comes from the exercise's `tracking`. Rows with a bad date, unknown workout, bad side or set number are counted in `skippedRows`; missing required columns throw.
+
+The CSV holds sessions only — rep range overrides are not exported.
 
 `formatElapsed(secs)` — formats a seconds count as `m:ss`, or `h:mm:ss` past an hour. Shared by the workout-duration display and the per-exercise rest badges (both in `WorkoutView`/`ExerciseCard`).
 
@@ -129,7 +135,7 @@ Data sourced from `getPersonalRecords()` in storage.js.
 
 ### Settings view (`src/views/SettingsView.jsx`)
 
-A **Data** section at the top has a Download CSV button (see `src/utils/csv.js`), disabled when there are no sessions.
+A **Data** section at the top has Download CSV (disabled when there are no sessions) and Upload CSV, which merges an exported file via `csvToSessions` + `importSessions` and shows the result (added / already on device / invalid rows) in place of the row's subtext. See `src/utils/csv.js`.
 
 Lists all unique exercises once (deduplicated by `exercise.id`, grouped under their first workout section). Each row shows the exercise name and two number inputs for `[lo, hi]`. Saves to localStorage on blur. Overridden ranges show in blue with a ↺ reset button. Clearing an override restores the hardcoded default.
 
