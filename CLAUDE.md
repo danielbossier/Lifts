@@ -40,6 +40,8 @@ Single source of truth for all exercises. Each exercise has a `tracking` field t
 
 `barbell` (optional) — `{ id, name }` for a barbell alternative (currently Flat and Incline Dumbbell Press). `resolveEquipment(ex, equipment)` returns the chosen variant with `baseId` (the dumbbell id) and `equipment` (`'dumbbell'|'barbell'`) set. The barbell variant has its own `id` so its history, goals and PRs are kept apart from the dumbbell numbers (dumbbell weight is per hand, barbell is total), shares the base exercise's rep range override (keyed by `baseId`), and has no `maxWeight`. `getExerciseVariants(ex)` lists every variant, which History/Records/CSV export use to find logged data under either id.
 
+Exercise order in each workout's array is the order shown everywhere (workout, Settings, History, Records). A1 alternates push and pull so the front delts and upper chest aren't hit back-to-back: Flat Press → Pull Up → Seated OHP → Cable Row → Close Grip Pull-Down → Incline Fly → Face Pull → Skull Crushers → planks. Reordering is safe: logs are keyed by `id`, not position, and draft validation doesn't depend on order.
+
 `exercise.id` is stable across workouts — `getLastSets` searches all sessions in reverse so history is shared across days for the same exercise.
 
 ### Storage layer (`src/data/storage.js`)
@@ -83,7 +85,7 @@ Key functions:
 
 ### WorkoutView (`src/views/WorkoutView.jsx`)
 
-Core logic lives here. On each render, exercises are resolved by merging rep range overrides into the hardcoded data and applying the 2-set cap (`buildExercises` = `resolveExercises` + `applySetCap`), then:
+Core logic lives here. On each render, exercises are resolved by dropping `hidden` ones, applying the DB/BB choice, merging rep range overrides into the hardcoded data and applying the 2-set cap (`buildExercises` = filter + `resolveExercises` + `applySetCap`), then:
 
 - `buildInitialSets(exercises)` — constructs blank set state, pre-filling weight from the most recent session for that exercise+side; auto-increments weight by 5 only if *every* set in that last session hit the top of the rep range (one missed set withholds the bump for all sets); the bump never exceeds `exercise.maxWeight`
 - `computeGoals(exercises)` — per-set goal values derived from last session:
@@ -104,7 +106,7 @@ Core logic lives here. On each render, exercises are resolved by merging rep ran
 
 **Workout selector:** A pill row in the header lets the user pick any of the 3 workouts. The rotation's suggested next workout is indicated with a green dot. Switching pills resets `sets` state via `selectWorkout(index)`.
 
-**Complete Workout:** Normalizes string inputs to numbers (empty → `null`), calls `saveSession`, then shows a completion screen with a button to initialize the next workout.
+**Complete Workout:** Normalizes string inputs to numbers (empty → `null`) for the exercises currently shown only (so leftover draft entries, e.g. for a now-hidden exercise or the unselected DB/BB variant, aren't saved), calls `saveSession`, then shows a completion screen with a button to initialize the next workout.
 
 ### Component routing
 
@@ -133,7 +135,7 @@ Lists all unique exercises once (deduplicated by `exercise.id`, grouped under th
 
 ### History view (`src/views/HistoryView.jsx`)
 
-Lists sessions newest-first via `getAllSessions()`. Each session is a collapsible card showing the workout label and date. Expanding a card iterates `workout.exercises` in order and renders any logged sets.
+Lists sessions newest-first via `getAllSessions()`. Each session is a collapsible card showing the workout label and date. Expanding a card iterates `workout.exercises` in order (expanded with `getExerciseVariants`, so barbell sets show as their own entry) and renders any logged sets.
 
 Set data is formatted by `summariseSets(exSets, tracking)` which returns `[{ label, entries }]` — `label` is `''` for non-sided exercises or `'L'`/`'R'` for bilateral, and `entries` is an array of strings like `'50×7'` (reps) or `'45s'` (time). Exercises with no logged sets (all-null values) are skipped. The `·`-separated entries are rendered in a monospaced numeric font for easy scanning.
 
